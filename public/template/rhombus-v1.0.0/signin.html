@@ -1,0 +1,42 @@
+{{#> auth-layout title="Sign In"}}
+  <main class="mx-auto grid min-h-dvh max-w-[55.375rem] content-center items-center gap-8 px-4 py-12 lg:grid-cols-[1fr_23.5rem] lg:gap-20">
+    {{! brand + welcome }}
+    <div class="text-center lg:text-start">
+      <div class="flex justify-center lg:mb-12 lg:justify-start">{{> logo size=32 textClass="text-2xl"}}</div>
+      <h1 class="mb-5 hidden text-[2rem] leading-[1.4] font-bold text-default lg:block">Welcome back<br />to {{site.name}}</h1>
+      <p class="mb-0 hidden max-w-77 leading-[1.65] text-muted lg:block">
+        We are lorem ipsum team dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+      </p>
+    </div>
+
+    {{! sign in card }}
+    <div class="card mx-auto w-full max-w-[23.5rem]">
+      <div class="card-body p-6">
+        <h2 class="mb-2 text-[1.375rem] leading-tight font-semibold text-default">Sign in</h2>
+        <p class="mb-8 text-default">
+          Don't have an account?
+          <a href="{{root}}signup.html" class="link link-primary link-hover font-medium">Sign Up</a>
+        </p>
+
+        <form action="{{root}}index.html" class="flex flex-col" novalidate>
+          <input type="email" class="form-control form-control-bordered mb-6" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required />
+          {{> password-field id="password" placeholder="Password" autocomplete="current-password"}}
+          <a href="#" class="link link-primary link-hover mt-4 mb-6 self-start font-medium">Forgot password?</a>
+          <button type="submit" class="btn btn-primary w-full">Sign In</button>
+        </form>
+
+        <div class="hr-label my-2 text-muted">or</div>
+
+        <div class="grid grid-cols-2 gap-5">
+          <a href="#" class="btn btn-outline-neutral min-w-0!">{{> icons/brand-google size=16}}Google</a>
+          <a href="#" class="btn btn-outline-neutral min-w-0!">{{> icons/brand-facebook size=16}}Facebook</a>
+        </div>
+      </div>
+      <div class="card-footer border-t border-default px-6 pt-4 pb-4 text-[11px] leading-[1.75] text-muted">
+        Protected by reCAPTCHA and subject to the {{site.name}}
+        <a href="#" class="link link-primary link-hover font-medium">Privacy Policy</a> and
+        <a href="#" class="link link-primary link-hover font-medium">Terms of Service</a>.
+      </div>
+    </div>
+  </main>
+{{/auth-layout}}

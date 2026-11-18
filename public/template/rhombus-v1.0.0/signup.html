@@ -1,0 +1,85 @@
+{{#> auth-layout title="Sign Up" bodyClass="bg-default"}}
+  <main class="grid min-h-dvh lg:grid-cols-[41.8%_1fr]">
+    {{! trial pitch }}
+    <section class="hidden items-center bg-subtle py-12 lg:flex lg:ps-[7.5rem] lg:pe-10">
+      <div class="max-w-90">
+        <h1 class="mb-5 text-[2rem] leading-[1.35] font-bold text-default">Get Your FREE<br />30-Days Trial Now!</h1>
+        <p class="mb-7 max-w-75 leading-[1.65] text-muted">Experience why over 2 million customers choose {{site.name}} tools</p>
+
+        <ul class="mb-7 flex list-none flex-col gap-3.5 ps-0">
+          {{#each site.signup.features}}
+            <li class="flex gap-3">
+              {{> (concat 'icons/' icon) size=20 class="-mt-0.5 shrink-0 text-info"}}
+              <div>
+                <p class="mb-1.5 leading-tight font-semibold text-default">{{title}}</p>
+                <p class="mb-0 leading-[1.5] text-muted">{{text}}</p>
+              </div>
+            </li>
+          {{/each}}
+        </ul>
+
+        <p class="mb-1 text-default">Do you prefer talking to a representative?</p>
+        <p class="mb-0 font-semibold text-default">
+          Call us at <a href="tel:8001301448" class="link link-primary link-hover">{{site.signup.phone}}</a>
+        </p>
+      </div>
+    </section>
+
+    {{! sign up form }}
+    <section class="flex items-center justify-center px-6 py-12">
+      <div class="w-full max-w-[21rem]">
+        <div class="mb-10 lg:hidden">{{> logo}}</div>
+        <h2 class="mb-6 text-[1.375rem] leading-tight font-semibold text-default">Sign up</h2>
+
+        <form action="{{root}}index.html" class="flex flex-col gap-6" novalidate>
+          <input type="email" class="form-control form-control-bordered" name="email" placeholder="Your email address" aria-label="Email address" autocomplete="email" required />
+
+          <div class="grid grid-cols-2 gap-5">
+            <input type="text" class="form-control form-control-bordered" name="firstName" placeholder="Your first name" aria-label="First name" autocomplete="given-name" required />
+            <input type="text" class="form-control form-control-bordered" name="lastName" placeholder="Your last name" aria-label="Last name" autocomplete="family-name" required />
+          </div>
+
+          <div>
+            {{! phone: country picker + number }}
+            <div class="flex rounded-(--input-btn-border-radius) border border-default bg-default focus-within:border-primary" data-phone>
+              <div class="dropdown">
+                <button type="button" class="flex h-full items-center gap-0.5 ps-3 pe-2" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Country code">
+                  <span data-phone-flag>{{> flag code="us"}}</span>
+                  {{> icons/arrow-drop-down size=18 class="text-muted"}}
+                </button>
+                <div class="dropdown-menu">
+                  {{#each site.signup.countries}}
+                    <button type="button" class="dropdown-item flex items-center gap-3" data-phone-country="{{dial}}">
+                      {{> flag code=code}}<span class="grow">{{name}}</span><span class="text-muted">{{dial}}</span>
+                    </button>
+                  {{/each}}
+                </div>
+              </div>
+              <input type="tel" class="form-control min-w-0 grow border-0 bg-transparent ps-2 hover:bg-transparent focus:bg-transparent" name="phone" placeholder="Phone number" aria-label="Phone number" autocomplete="tel-national" />
+            </div>
+            <p class="mt-1.5 mb-0 text-[11px] text-muted">Standard call, messaging or data rates may apply.</p>
+          </div>
+
+          {{> password-field id="password" placeholder="Password" autocomplete="new-password"}}
+
+          <button type="submit" class="btn btn-primary w-full">Start free trial</button>
+
+          <div class="form-check -ms-2.5 -mt-2.5">
+            <label for="agree" class="form-check-input-wrapper">
+              <input class="form-check-input" type="checkbox" id="agree" name="agree" checked required />
+            </label>
+            <label for="agree" class="form-check-label ms-1 text-[11px] text-muted">
+              I agree to the <a href="#" class="link link-primary link-hover">Master Subscription Agreement</a>
+            </label>
+          </div>
+        </form>
+
+        <hr class="mt-3 mb-4 border-default" />
+        <p class="mb-0 font-medium text-default">
+          Already have an account?
+          <a href="{{root}}signin.html" class="link link-primary link-hover">Sign In</a>
+        </p>
+      </div>
+    </section>
+  </main>
+{{/auth-layout}}

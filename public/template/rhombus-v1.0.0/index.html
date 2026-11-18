@@ -1,0 +1,161 @@
+{{#> layout page="dashboard" title="Overview" script="dashboard"}}
+  {{! header }}
+  <div class="mb-7 flex flex-wrap items-start justify-between gap-6">
+    <div>
+      <h2 class="mb-2.5 text-4xl leading-[1.2] font-bold text-default">Hi {{site.user.name}}</h2>
+      <p class="mb-0 text-muted">Welcome back to {{site.name}} CRM dashboard</p>
+    </div>
+    <div class="flex flex-wrap gap-4 pt-1.5">
+      <button type="button" class="btn btn-outline-neutral">{{> icons/file-download class="text-muted"}}Download</button>
+      <button type="button" class="btn btn-primary">+ Add Dashlet</button>
+    </div>
+  </div>
+
+  {{! stat cards }}
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    {{#each site.stats}}
+      {{> stat-card}}
+    {{/each}}
+  </div>
+
+  {{! charts }}
+  <div class="mt-3.5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+    {{! email sent total }}
+    <div class="card">
+      <div class="card-body flex flex-col">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="card-title mb-1.5">Email Sent Total</h3>
+            <p class="card-subtitle mb-0">March 2020</p>
+          </div>
+          {{> card-menu}}
+        </div>
+        <div id="emailChart" class="mx-auto mt-3 mb-5 size-54" role="img" aria-label="Emails: 860 sent, 730 opened, 234 spam"></div>
+        <ul class="mt-auto mb-0 flex list-none flex-wrap justify-center gap-x-6 gap-y-2 ps-0">
+          {{#each site.emails}}
+            <li class="flex items-center gap-2" data-email="{{name}}" data-value="{{value}}" data-percent="{{percent}}" data-color="{{color}}">
+              <span class="size-2 rounded-full bg-{{color}}"></span>{{value}} {{name}}
+            </li>
+          {{/each}}
+        </ul>
+      </div>
+    </div>
+
+    {{! income amounts }}
+    <div class="card">
+      <div class="card-body flex flex-col">
+        <div class="flex items-start justify-between">
+          <h3 class="card-title mb-0">Income Amounts</h3>
+          {{> card-menu}}
+        </div>
+        <div class="mt-11 mb-6 flex min-h-46 grow items-end justify-between" role="img" aria-label="Income by month">
+          {{#each site.incomeBars}}
+            <span class="w-2 rounded-xs bg-primary transition-colors hover:bg-primary-dark" style="height: {{height}}%" title="{{month}}: {{amount}}"></span>
+          {{/each}}
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          {{#each site.income}}
+            <div>
+              <p class="mb-1 whitespace-nowrap text-default">{{label}}</p>
+              {{#if up}}
+                <p class="mb-0 flex items-center text-info">{{> icons/arrow-drop-up class="-ms-1.5"}}{{value}}</p>
+              {{else}}
+                <p class="mb-0 flex items-center text-secondary">{{> icons/arrow-drop-down class="-ms-1.5"}}{{value}}</p>
+              {{/if}}
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    {{! revenue: the area chart bleeds into the card padding }}
+    <div class="card md:col-span-2 xl:col-span-1">
+      <div class="card-body flex flex-col px-4 pb-4">
+        <div class="flex items-start justify-between px-4">
+          <h3 class="card-title mb-0">Revenue</h3>
+          {{> card-menu}}
+        </div>
+        <p class="mt-9 mb-2.5 px-4 text-[2.0625rem] leading-none font-bold text-default">$165,750.23</p>
+        <p class="mb-0 px-4 text-muted">Won from 262 Deals</p>
+        <div id="revenueChart" class="mt-4 min-h-50 grow" role="img" aria-label="Revenue trend"></div>
+      </div>
+    </div>
+  </div>
+
+  {{! performance + tasks }}
+  <div class="mt-3.5 grid gap-3 xl:grid-cols-3">
+    <div class="card xl:col-span-2">
+      <div class="card-body px-4 pb-4">
+        <div class="flex items-start justify-between px-4">
+          <div>
+            <h3 class="card-title mb-1.5">Top Performance</h3>
+            <p class="card-subtitle mb-0">Last 2 Weeks</p>
+          </div>
+          {{> card-menu}}
+        </div>
+        <div class="mt-4.5 overflow-x-auto">
+          <table class="table table-striped-odd mb-0 whitespace-nowrap">
+            <thead>
+              <tr>
+                <th scope="col" class="w-12">No</th>
+                <th scope="col">Ref</th>
+                <th scope="col">Leads</th>
+                <th scope="col">Deals</th>
+                <th scope="col">Tasks</th>
+                <th scope="col" class="text-end">Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each site.performers}}
+                <tr>
+                  <td>{{add @index 1}}.</td>
+                  <td>
+                    <div class="flex items-center gap-4">
+                      <img src="{{@root.root}}{{avatar}}" alt="" class="size-10 shrink-0 rounded-full object-cover" />
+                      <div class="leading-tight">
+                        <a href="#" class="block text-default no-underline hover:text-primary">{{name}}</a>
+                        <span class="text-muted">{{amount}}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{leads}}</td>
+                  <td>{{deals}}</td>
+                  <td>{{tasks}} Tasks Done</td>
+                  <td class="text-end">
+                    <span class="inline-flex items-center gap-2">{{> rate-ring value=rate}}{{rate}}%</span>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body flex flex-col">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="card-title mb-1.5">Tasks</h3>
+            <p class="card-subtitle mb-0" data-task-count>4 of {{site.tasks.total}} remaining</p>
+          </div>
+          {{> card-menu}}
+        </div>
+        <ul class="mt-6 mb-8 flex list-none flex-col ps-0" data-task-list data-total="{{site.tasks.total}}">
+          {{#each site.tasks.items}}
+            <li class="form-check -ms-2.5">
+              <label for="task-{{@index}}" class="form-check-input-wrapper">
+                <input class="form-check-input form-check-info" type="checkbox" id="task-{{@index}}" {{#if done}}checked{{/if}} />
+              </label>
+              <label for="task-{{@index}}" class="form-check-label ms-1.5 text-default">{{title}}</label>
+            </li>
+          {{/each}}
+        </ul>
+        <form class="input-group mt-auto relative" data-task-form>
+          <input type="text" class="form-control form-control-bordered rounded-lg" placeholder="Add new todo" aria-label="New todo" required />
+          <button type="submit" class="btn btn-primary min-w-15! px-4 rounded-lg absolute right-0 top-0 z-999">Add</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{{/layout}}

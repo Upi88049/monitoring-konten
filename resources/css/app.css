@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    /* Dharma Group Card Component */
+    .card {
+        @apply bg-white rounded-2xl border border-gray-200/80 shadow-xs transition-all;
+    }
+
+    .card-title {
+        @apply text-base font-bold text-gray-900 tracking-tight;
+    }
+
+    .card-subtitle {
+        @apply text-xs text-gray-500 font-normal;
+    }
+
+    /* Dharma Group Badge Component */
+    .badge {
+        @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap;
+    }
+
+    .badge-primary {
+        @apply bg-purple-50 text-purple-700 border border-purple-200/60;
+    }
+
+    .badge-secondary {
+        @apply bg-pink-50 text-pink-700 border border-pink-200/60;
+    }
+
+    .badge-info {
+        @apply bg-sky-50 text-sky-700 border border-sky-200/60;
+    }
+
+    .badge-warning {
+        @apply bg-amber-50 text-amber-800 border border-amber-200/60;
+    }
+
+    .badge-success {
+        @apply bg-emerald-50 text-emerald-800 border border-emerald-200/60;
+    }
+
+    .badge-danger {
+        @apply bg-rose-50 text-rose-700 border border-rose-200/60;
+    }
+}
+

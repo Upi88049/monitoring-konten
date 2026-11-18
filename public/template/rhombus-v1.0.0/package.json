@@ -1,0 +1,36 @@
+{
+  "name": "rhombus",
+  "version": "1.0.0",
+  "description": "Rhombus CRM admin dashboard template built with Hummingbird UI and Tailwind CSS. Plain HTML, powered by Vite.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "keywords": [
+    "dashboard",
+    "admin",
+    "hummingbird",
+    "tailwind",
+    "tailwindcss",
+    "html",
+    "vite"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "zip": "vite build && node build/zip.js",
+    "format": "prettier --write \"**/*.{css,js,json,md}\""
+  },
+  "dependencies": {
+    "@hummingbirdui/hummingbird": "^1.4.1",
+    "echarts": "^6.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "archiver": "^8.0.0",
+    "handlebars": "^4.7.10",
+    "prettier": "^3.9.10",
+    "tailwindcss": "^4.3.4",
+    "vite": "^8.3.5"
+  }
+}
