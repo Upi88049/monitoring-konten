@@ -28,3 +28,6 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 80
+
+# 5. Jalankan migrasi database otomatis lalu nyalakan web server Apache
+CMD ["sh", "-c", "php artisan migrate --force && apache2-foreground"]
