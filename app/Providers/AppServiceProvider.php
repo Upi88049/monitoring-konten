@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\ContentLog;
+use App\Models\Pillar;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -42,7 +43,14 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('layouts.app', function ($view) {
-            $view->with('pendingH30Count', ContentLog::pendingH30()->count());
+            $pendingH30 = ContentLog::pendingH30()->get();
+            $dueReminderContents = $pendingH30->filter(function ($item) {
+                return $item->h30_due_date && $item->h30_due_date->lte(now()->endOfDay());
+            })->sortBy('h30_due_date')->values();
+
+            $view->with('pendingH30Count', $pendingH30->count())
+                ->with('dueReminderContents', $dueReminderContents)
+                ->with('availablePillars', Pillar::allPillars());
         });
     }
 }

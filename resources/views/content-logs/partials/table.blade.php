@@ -69,7 +69,7 @@
                             <div class="max-w-xs truncate" title="{{ $log->title }}">{{ $log->title }}</div>
                         </td>
                         <td class="py-3 px-4">
-                            <span class="badge badge-info">{{ $log->pillar?->value }}</span>
+                            <span class="badge badge-info">{{ $log->pillar_name }}</span>
                         </td>
                         <td class="py-3 px-4 text-gray-600">{{ $log->pic_name ?: '-' }}</td>
                         <td class="py-3 px-4">

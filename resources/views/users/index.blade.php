@@ -250,7 +250,7 @@
 <script>
     function openEditUserModal(user) {
         document.getElementById('editUserSubtitle').textContent = user.email;
-        document.getElementById('editUserForm').action = '/users/' + user.id;
+        document.getElementById('editUserForm').action = "{{ url('users') }}/" + user.id;
 
         document.getElementById('eu_name').value = user.name || '';
         document.getElementById('eu_email').value = user.email || '';

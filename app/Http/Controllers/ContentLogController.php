@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ContentPillar;
 use App\Enums\ContentType;
 use App\Enums\DataStatus;
 use App\Models\ContentLog;
+use App\Models\Pillar;
 use App\Services\ActivityLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
@@ -74,10 +75,48 @@ class ContentLogController extends Controller
             return view('content-logs.partials.table', compact('logs', 'perPage'));
         }
 
-        $pillars = ContentPillar::cases();
+        $pillars = Pillar::allPillars();
         $contentTypes = ContentType::cases();
 
         return view('content-logs.index', compact('logs', 'pillars', 'contentTypes', 'perPage'));
+    }
+
+    /**
+     * Tampilkan detail konten (redirect ke halaman index dengan filter judul).
+     */
+    public function show(ContentLog $contentLog): RedirectResponse
+    {
+        return redirect()->route('content-logs.index', ['search' => $contentLog->title]);
+    }
+
+    /**
+     * Simpan pilar konten baru via AJAX.
+     */
+    public function storePillar(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $pillarName = trim($validated['name']);
+        $pillar = Pillar::firstOrCreate(['name' => $pillarName]);
+
+        ActivityLogger::log(
+            action: 'pillar_create',
+            module: 'Pilar Konten',
+            description: "Menambahkan pilar konten baru: '{$pillar->name}'.",
+            properties: ['pillar_id' => $pillar->id, 'name' => $pillar->name]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pilar '{$pillar->name}' berhasil ditambahkan.",
+            'pillar' => [
+                'id' => $pillar->id,
+                'name' => $pillar->name,
+                'value' => $pillar->name,
+            ],
+        ]);
     }
 
     /**
@@ -89,11 +128,13 @@ class ContentLogController extends Controller
             'post_date' => 'required|date',
             'content_type' => ['required', new Enum(ContentType::class)],
             'title' => 'required|string|max:255',
-            'pillar' => ['required', new Enum(ContentPillar::class)],
+            'pillar' => ['required', 'string', 'max:100'],
             'pic_name' => 'nullable|string|max:100',
             'evidence_url' => 'nullable|url|max:1000',
             'notes' => 'nullable|string',
         ]);
+
+        Pillar::firstOrCreate(['name' => trim($validated['pillar'])]);
 
         $content = ContentLog::create($validated);
 
@@ -117,11 +158,13 @@ class ContentLogController extends Controller
             'post_date' => 'required|date',
             'content_type' => ['required', new Enum(ContentType::class)],
             'title' => 'required|string|max:255',
-            'pillar' => ['required', new Enum(ContentPillar::class)],
+            'pillar' => ['required', 'string', 'max:100'],
             'pic_name' => 'nullable|string|max:100',
             'evidence_url' => 'nullable|url|max:1000',
             'notes' => 'nullable|string',
         ]);
+
+        Pillar::firstOrCreate(['name' => trim($validated['pillar'])]);
 
         $contentLog->update($validated);
 

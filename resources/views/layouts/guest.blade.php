@@ -7,6 +7,9 @@
 
         <title>{{ config('app.name', 'Dharma Group IG Dashboard') }} — Autentikasi</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="{{ asset('assets/logo-dharma.png') }}">
+
         <!-- Google Fonts: Inter -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +26,7 @@
     <body class="text-gray-900 antialiased bg-slate-50">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-8 sm:pt-0 p-4">
             <div class="mb-4">
-                <a href="/">
+                <a href="{{ url('/') }}">
                     <x-application-logo />
                 </a>
             </div>

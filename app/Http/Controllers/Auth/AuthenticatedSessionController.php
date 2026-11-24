@@ -28,6 +28,7 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->flash('show_h30_reminder', true);
 
         ActivityLogger::log(
             action: 'login',

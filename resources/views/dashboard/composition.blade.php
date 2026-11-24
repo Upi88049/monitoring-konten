@@ -25,13 +25,31 @@
                     </select>
                 </div>
 
+                <!-- Bulan -->
+                <div class="flex items-center gap-1.5">
+                    <label for="filter_month" class="text-xs text-gray-600 font-medium">Bulan:</label>
+                    <select id="filter_month" name="month" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1.5 font-semibold text-gray-800 focus:ring-2 focus:ring-purple-500 cursor-pointer">
+                        <option value="">Semua Bulan (Jan - Des)</option>
+                        @php
+                            $indoMonths = [
+                                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                            ];
+                        @endphp
+                        @foreach($indoMonths as $num => $mName)
+                            <option value="{{ $num }}" {{ (int) $selectedMonth === $num ? 'selected' : '' }}>{{ $num }} - {{ $mName }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Pilar Konten -->
                 <div class="flex items-center gap-1.5">
                     <label for="filter_pillar" class="text-xs text-gray-600 font-medium">Pilar:</label>
                     <select id="filter_pillar" name="pillar" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1.5 font-medium text-gray-800 focus:ring-2 focus:ring-purple-500">
                         <option value="">Semua Pilar</option>
-                        @foreach(\App\Enums\ContentPillar::cases() as $pillarCase)
-                            <option value="{{ $pillarCase->value }}" {{ $selectedPillar === $pillarCase->value ? 'selected' : '' }}>{{ $pillarCase->value }}</option>
+                        @foreach($allPillars as $pillarName)
+                            <option value="{{ $pillarName }}" {{ $selectedPillar === $pillarName ? 'selected' : '' }}>{{ $pillarName }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -49,7 +67,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                @if($selectedPillar || $selectedContentType || $selectedYear != 2026)
+                @if($selectedMonth || $selectedPillar || $selectedContentType || $selectedYear != 2026)
                     <a href="{{ route('dashboard.composition') }}" class="text-xs text-gray-500 hover:text-purple-700 underline font-medium">Reset Filter</a>
                 @endif
                 <button type="submit" class="px-3 py-1.5 text-xs font-semibold bg-purple-700 hover:bg-purple-800 text-white rounded-lg shadow-xs transition">
@@ -75,7 +93,7 @@
         </div>
 
         <!-- KPI 4: Top & Low Performance Champion Cards -->
-        <div class="card p-5 flex flex-col justify-between">
+        <div class="card p-5 flex flex-col">
             <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
                 <div>
                     <h3 class="card-title text-base font-bold text-gray-900">KPI 4 — Top & Low Performance</h3>
@@ -108,119 +126,262 @@
                 </div>
             </div>
 
-            <!-- TAB 1: Top Performance Items -->
-            <div id="topPerformanceList" class="mt-4 space-y-2.5 overflow-y-auto max-h-[300px] pr-1">
-                <!-- Top Likes -->
-                <div class="p-3 rounded-xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
-                            ❤️
+            @if(! $hasPoolData)
+                <!-- Empty State jika tidak ada data evaluasi di bulan/filter terpilih -->
+                <div class="my-auto py-12 flex flex-col items-center justify-center text-center">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-2 shadow-xs">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    </div>
+                    <div class="text-xs font-bold text-gray-800">Tidak Ada Data Evaluasi</div>
+                    <div class="text-[11px] text-gray-500 max-w-xs mt-0.5">Belum ada konten yang berstatus selesai evaluasi pada bulan atau filter yang dipilih.</div>
+                </div>
+            @else
+                <!-- TAB 1: Top Performance Items -->
+                <div id="topPerformanceList" class="mt-4 space-y-2.5 overflow-y-auto max-h-[350px] pr-1">
+                    <!-- Top Views -->
+                    <div class="p-3 rounded-xl bg-teal-50/60 border border-teal-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
+                                👁️
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-teal-800">Top Views (H+30)</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topViews?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $topViews?->post_date ? $topViews->post_date->format('d M Y') : '-' }} &bull; {{ $topViews?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-[11px] uppercase tracking-wider font-bold text-purple-800">Top Likes</div>
-                            <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topLikes?->title ?? 'Belum ada data' }}</div>
-                            <div class="text-[11px] text-gray-500">{{ $topLikes?->post_date?->format('d M Y') }} &bull; {{ $topLikes?->pillar?->value }}</div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-teal-900">{{ number_format($topViews?->views_h30 ?? 0) }}</div>
+                            <div class="text-[10px] text-teal-700 font-semibold">Tertinggi</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-base font-extrabold text-purple-900">{{ number_format($topLikes?->likes ?? 0) }}</div>
-                        <div class="text-[10px] text-purple-700 font-semibold">Tertinggi</div>
+
+                    <!-- Top Engagement Rate -->
+                    <div class="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                                ⚡
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-indigo-800">Top Engagement Rate</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topER?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $topER ? $topER->post_date?->format('d M Y') . ' • ' . number_format($topER->views_h30) . ' views' : '-' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-indigo-900">{{ number_format((float) ($topER?->engagement_rate ?? 0), 2) }}%</div>
+                            <div class="text-[10px] text-indigo-700 font-semibold">Tertinggi</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Likes -->
+                    <div class="p-3 rounded-xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
+                                ❤️
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-purple-800">Top Likes</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topLikes?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $topLikes?->post_date ? $topLikes->post_date->format('d M Y') : '-' }} &bull; {{ $topLikes?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-purple-900">{{ number_format($topLikes?->likes ?? 0) }}</div>
+                            <div class="text-[10px] text-purple-700 font-semibold">Tertinggi</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Comments -->
+                    <div class="p-3 rounded-xl bg-cyan-50/60 border border-cyan-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-bold text-xs">
+                                💬
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-cyan-800">Top Comments</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topComments?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $topComments?->post_date ? $topComments->post_date->format('d M Y') : '-' }} &bull; {{ $topComments?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-cyan-900">{{ number_format($topComments?->comments ?? 0) }}</div>
+                            <div class="text-[10px] text-cyan-700 font-semibold">Tertinggi</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Share / Repost -->
+                    <div class="p-3 rounded-xl bg-rose-50/60 border border-rose-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center font-bold text-xs">
+                                ↗️
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-rose-800">Top Share / Repost</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topShares?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $topShares?->post_date ? $topShares->post_date->format('d M Y') : '-' }} &bull; {{ $topShares?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-rose-900">{{ number_format($topShares?->shares_reposts ?? 0) }}</div>
+                            <div class="text-[10px] text-rose-700 font-semibold">Tertinggi</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Save -->
+                    <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs">
+                                💾
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-amber-800">Top Save</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topSaves?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $topSaves?->post_date ? $topSaves->post_date->format('d M Y') : '-' }} &bull; {{ $topSaves?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-amber-900">{{ number_format($topSaves?->saves ?? 0) }}</div>
+                            <div class="text-[10px] text-amber-700 font-semibold">Tertinggi</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Top Share / Repost -->
-                <div class="p-3 rounded-xl bg-rose-50/60 border border-rose-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center font-bold text-xs">
-                            ↗️
+                <!-- TAB 2: Lowest Performance Items (Low) -->
+                <div id="lowPerformanceList" class="mt-4 space-y-2.5 overflow-y-auto max-h-[350px] pr-1 hidden">
+                    <!-- Lowest Views -->
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
+                                👁️
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Views (H+30)</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowViews?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $lowViews?->post_date ? $lowViews->post_date->format('d M Y') : '-' }} &bull; {{ $lowViews?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-[11px] uppercase tracking-wider font-bold text-rose-800">Top Share / Repost</div>
-                            <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topShares?->title ?? 'Belum ada data' }}</div>
-                            <div class="text-[11px] text-gray-500">{{ $topShares?->post_date?->format('d M Y') }} &bull; {{ $topShares?->pillar?->value }}</div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-gray-800">{{ number_format($lowViews?->views_h30 ?? 0) }}</div>
+                            <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-base font-extrabold text-rose-900">{{ number_format($topShares?->shares_reposts ?? 0) }}</div>
-                        <div class="text-[10px] text-rose-700 font-semibold">Tertinggi</div>
-                    </div>
-                </div>
 
-                <!-- Top Save -->
-                <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs">
-                            💾
+                    <!-- Lowest Engagement Rate -->
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
+                                📉
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Engagement Rate</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowER?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $lowER ? $lowER->post_date?->format('d M Y') . ' • ' . number_format($lowER->views_h30) . ' views' : '-' }}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-[11px] uppercase tracking-wider font-bold text-amber-800">Top Save</div>
-                            <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $topSaves?->title ?? 'Belum ada data' }}</div>
-                            <div class="text-[11px] text-gray-500">{{ $topSaves?->post_date?->format('d M Y') }} &bull; {{ $topSaves?->pillar?->value }}</div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-gray-800">{{ number_format((float) ($lowER?->engagement_rate ?? 0), 2) }}%</div>
+                            <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-base font-extrabold text-amber-900">{{ number_format($topSaves?->saves ?? 0) }}</div>
-                        <div class="text-[10px] text-amber-700 font-semibold">Tertinggi</div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- TAB 2: Lowest Performance Items (Low) -->
-            <div id="lowPerformanceList" class="mt-4 space-y-2.5 overflow-y-auto max-h-[300px] pr-1 hidden">
-                <!-- Lowest Likes -->
-                <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
-                            🤍
+                    <!-- Lowest Likes -->
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
+                                🤍
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Likes</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowLikes?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $lowLikes?->post_date ? $lowLikes->post_date->format('d M Y') : '-' }} &bull; {{ $lowLikes?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Likes</div>
-                            <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowLikes?->title ?? 'Belum ada data' }}</div>
-                            <div class="text-[11px] text-gray-500">{{ $lowLikes?->post_date?->format('d M Y') }} &bull; {{ $lowLikes?->pillar?->value }}</div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-gray-800">{{ number_format($lowLikes?->likes ?? 0) }}</div>
+                            <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-base font-extrabold text-gray-800">{{ number_format($lowLikes?->likes ?? 0) }}</div>
-                        <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
-                    </div>
-                </div>
 
-                <!-- Lowest Share / Repost -->
-                <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
-                            ↘️
+                    <!-- Lowest Comments -->
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
+                                💬
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Comments</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowComments?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $lowComments?->post_date ? $lowComments->post_date->format('d M Y') : '-' }} &bull; {{ $lowComments?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Share / Repost</div>
-                            <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowShares?->title ?? 'Belum ada data' }}</div>
-                            <div class="text-[11px] text-gray-500">{{ $lowShares?->post_date?->format('d M Y') }} &bull; {{ $lowShares?->pillar?->value }}</div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-gray-800">{{ number_format($lowComments?->comments ?? 0) }}</div>
+                            <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-base font-extrabold text-gray-800">{{ number_format($lowShares?->shares_reposts ?? 0) }}</div>
-                        <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
-                    </div>
-                </div>
 
-                <!-- Lowest Save -->
-                <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
-                            💾
+                    <!-- Lowest Share / Repost -->
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
+                                ↘️
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Share / Repost</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowShares?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $lowShares?->post_date ? $lowShares->post_date->format('d M Y') : '-' }} &bull; {{ $lowShares?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Save</div>
-                            <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowSaves?->title ?? 'Belum ada data' }}</div>
-                            <div class="text-[11px] text-gray-500">{{ $lowSaves?->post_date?->format('d M Y') }} &bull; {{ $lowSaves?->pillar?->value }}</div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-gray-800">{{ number_format($lowShares?->shares_reposts ?? 0) }}</div>
+                            <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-base font-extrabold text-gray-800">{{ number_format($lowSaves?->saves ?? 0) }}</div>
-                        <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
+
+                    <!-- Lowest Save -->
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-500 text-white flex items-center justify-center font-bold text-xs">
+                                💾
+                            </div>
+                            <div>
+                                <div class="text-[11px] uppercase tracking-wider font-bold text-gray-700">Lowest Save</div>
+                                <div class="text-xs font-bold text-gray-900 truncate max-w-xs">{{ $lowSaves?->title ?? 'Belum ada data' }}</div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ $lowSaves?->post_date ? $lowSaves->post_date->format('d M Y') : '-' }} &bull; {{ $lowSaves?->pillar?->value ?? '-' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-base font-extrabold text-gray-800">{{ number_format($lowSaves?->saves ?? 0) }}</div>
+                            <div class="text-[10px] text-gray-500 font-semibold">Terendah</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
         </div>
 
     </div>
@@ -407,90 +568,117 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        const monthNames = @json($monthNames);
-        const drilldownData = @json($monthlyContentsDrilldown);
+        requestAnimationFrame(function () {
+            const monthNames = @json($monthNames);
+            const drilldownData = @json($monthlyContentsDrilldown);
 
-        // KPI 3: Stacked Bar Chart Komposisi Interaksi
-        const stackedEl = document.getElementById('chartStackedInteractions');
-        if (stackedEl) {
-            const chartStacked = echarts.init(stackedEl);
-            chartStacked.setOption({
-                tooltip: {
-                    trigger: 'axis',
-                    axisPointer: { type: 'shadow' }
-                },
-                legend: { data: ['Likes', 'Comments', 'Shares / Reposts', 'Saves'], bottom: 0 },
-                grid: { top: '12%', left: '3%', right: '4%', bottom: '15%', containLabel: true },
-                xAxis: [{ type: 'category', data: monthNames }],
-                yAxis: [{ type: 'value', name: 'Interaksi', splitLine: { lineStyle: { color: '#f0f0f0' } } }],
-                series: [
-                    {
-                        name: 'Likes',
-                        type: 'bar',
-                        stack: 'total',
-                        emphasis: { focus: 'series' },
-                        itemStyle: { color: '#775da6' },
-                        data: @json($monthlyLikes)
+            // KPI 3: Stacked Bar Chart Komposisi Interaksi
+            const stackedEl = document.getElementById('chartStackedInteractions');
+            if (stackedEl) {
+                const chartStacked = echarts.init(stackedEl, null, { renderer: 'canvas' });
+                chartStacked.setOption({
+                    animation: true,
+                    animationDuration: 900,
+                    animationEasing: 'cubicOut',
+                    animationDurationUpdate: 500,
+                    animationEasingUpdate: 'cubicInOut',
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' }
                     },
-                    {
-                        name: 'Comments',
-                        type: 'bar',
-                        stack: 'total',
-                        emphasis: { focus: 'series' },
-                        itemStyle: { color: '#2dd4bf' },
-                        data: @json($monthlyComments)
-                    },
-                    {
-                        name: 'Shares / Reposts',
-                        type: 'bar',
-                        stack: 'total',
-                        emphasis: { focus: 'series' },
-                        itemStyle: { color: '#f9837c' },
-                        data: @json($monthlyShares)
-                    },
-                    {
-                        name: 'Saves',
-                        type: 'bar',
-                        stack: 'total',
-                        emphasis: { focus: 'series' },
-                        itemStyle: { color: '#fbbf24', borderRadius: [4, 4, 0, 0] },
-                        data: @json($monthlySaves)
+                    legend: { data: ['Likes', 'Comments', 'Shares / Reposts', 'Saves'], bottom: 0 },
+                    grid: { top: '12%', left: '3%', right: '4%', bottom: '15%', containLabel: true },
+                    xAxis: [{ type: 'category', data: monthNames }],
+                    yAxis: [{ type: 'value', name: 'Interaksi', splitLine: { lineStyle: { color: '#f0f0f0' } } }],
+                    series: [
+                        {
+                            name: 'Likes',
+                            type: 'bar',
+                            stack: 'total',
+                            emphasis: { focus: 'series' },
+                            itemStyle: { color: '#775da6' },
+                            animationDelay: function (idx) {
+                                return idx * 40;
+                            },
+                            animationDuration: 800,
+                            animationEasing: 'cubicOut',
+                            data: @json($monthlyLikes)
+                        },
+                        {
+                            name: 'Comments',
+                            type: 'bar',
+                            stack: 'total',
+                            emphasis: { focus: 'series' },
+                            itemStyle: { color: '#2dd4bf' },
+                            animationDelay: function (idx) {
+                                return idx * 40 + 70;
+                            },
+                            animationDuration: 800,
+                            animationEasing: 'cubicOut',
+                            data: @json($monthlyComments)
+                        },
+                        {
+                            name: 'Shares / Reposts',
+                            type: 'bar',
+                            stack: 'total',
+                            emphasis: { focus: 'series' },
+                            itemStyle: { color: '#f9837c' },
+                            animationDelay: function (idx) {
+                                return idx * 40 + 140;
+                            },
+                            animationDuration: 800,
+                            animationEasing: 'cubicOut',
+                            data: @json($monthlyShares)
+                        },
+                        {
+                            name: 'Saves',
+                            type: 'bar',
+                            stack: 'total',
+                            emphasis: { focus: 'series' },
+                            itemStyle: { color: '#fbbf24', borderRadius: [4, 4, 0, 0] },
+                            animationDelay: function (idx) {
+                                return idx * 40 + 210;
+                            },
+                            animationDuration: 800,
+                            animationEasing: 'cubicOut',
+                            data: @json($monthlySaves)
+                        }
+                    ]
+                });
+
+                // Drilldown click interaction
+                chartStacked.on('click', function (params) {
+                    const monthIdx = params.dataIndex + 1;
+                    const items = drilldownData[monthIdx] || [];
+                    const monthName = monthNames[params.dataIndex];
+
+                    document.getElementById('drilldownTitle').innerText = 'Rincian Konten Bulan ' + monthName + ' ' + {{ $selectedYear }};
+                    const tbody = document.getElementById('drilldownTbody');
+                    tbody.innerHTML = '';
+
+                    if (items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-400">Tidak ada konten yang dievaluasi pada bulan ini.</td></tr>';
+                    } else {
+                        items.forEach(item => {
+                            const tr = document.createElement('tr');
+                            tr.className = 'hover:bg-gray-50';
+                            tr.innerHTML = `
+                                <td class="py-2.5 px-2 font-bold text-gray-900">${item.title}</td>
+                                <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">${item.pillar}</span></td>
+                                <td class="py-2.5 px-2 text-right font-medium">${item.views.toLocaleString()}</td>
+                                <td class="py-2.5 px-2 text-right font-medium">${item.interactions.toLocaleString()}</td>
+                                <td class="py-2.5 px-2 text-right font-bold text-purple-700">${item.er.toFixed(2)}%</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
                     }
-                ]
-            });
 
-            // Drilldown click interaction
-            chartStacked.on('click', function (params) {
-                const monthIdx = params.dataIndex + 1;
-                const items = drilldownData[monthIdx] || [];
-                const monthName = monthNames[params.dataIndex];
+                    document.getElementById('drilldownModal').classList.remove('hidden');
+                });
 
-                document.getElementById('drilldownTitle').innerText = 'Rincian Konten Bulan ' + monthName + ' ' + {{ $selectedYear }};
-                const tbody = document.getElementById('drilldownTbody');
-                tbody.innerHTML = '';
-
-                if (items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-400">Tidak ada konten yang dievaluasi pada bulan ini.</td></tr>';
-                } else {
-                    items.forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.className = 'hover:bg-gray-50';
-                        tr.innerHTML = `
-                            <td class="py-2.5 px-2 font-bold text-gray-900">${item.title}</td>
-                            <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">${item.pillar}</span></td>
-                            <td class="py-2.5 px-2 text-right font-medium">${item.views.toLocaleString()}</td>
-                            <td class="py-2.5 px-2 text-right font-medium">${item.interactions.toLocaleString()}</td>
-                            <td class="py-2.5 px-2 text-right font-bold text-purple-700">${item.er.toFixed(2)}%</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-
-                document.getElementById('drilldownModal').classList.remove('hidden');
-            });
-
-            window.addEventListener('resize', () => chartStacked.resize());
-        }
+                window.addEventListener('resize', () => chartStacked.resize());
+            }
+        });
     });
 </script>
 @endpush

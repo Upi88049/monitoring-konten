@@ -88,6 +88,55 @@ class ContentLogCrudTest extends TestCase
         ]);
     }
 
+    public function test_updating_post_date_recalculates_h30_due_date(): void
+    {
+        $log = ContentLog::factory()->create([
+            'post_date' => '2026-03-01',
+        ]);
+
+        $this->assertEquals('2026-03-31', $log->h30_due_date->format('Y-m-d'));
+
+        $payload = [
+            'post_date' => '2026-04-10',
+            'content_type' => $log->content_type->value,
+            'title' => $log->title,
+            'pillar' => is_object($log->pillar) ? $log->pillar->value : $log->pillar,
+        ];
+
+        $response = $this->put(route('content-logs.update', $log), $payload);
+
+        $response->assertRedirect(route('content-logs.index'));
+
+        $log->refresh();
+        $this->assertEquals('2026-04-10', $log->post_date->format('Y-m-d'));
+        $this->assertEquals('2026-05-10', $log->h30_due_date->format('Y-m-d'));
+    }
+
+    public function test_updating_content_log_with_dynamic_pillar(): void
+    {
+        $log = ContentLog::factory()->create([
+            'pillar' => 'CSR & Sustainability',
+        ]);
+
+        $this->assertEquals('CSR & Sustainability', $log->pillar_name);
+        $this->assertStringContainsString('"pillar":"CSR & Sustainability"', json_encode($log));
+
+        $payload = [
+            'post_date' => $log->post_date->format('Y-m-d'),
+            'content_type' => $log->content_type->value,
+            'title' => 'Updated Title',
+            'pillar' => 'Brand Activation',
+        ];
+
+        $response = $this->put(route('content-logs.update', $log), $payload);
+
+        $response->assertRedirect(route('content-logs.index'));
+
+        $log->refresh();
+        $this->assertEquals('Brand Activation', $log->pillar_name);
+        $this->assertStringContainsString('"pillar":"Brand Activation"', json_encode($log));
+    }
+
     public function test_can_update_h30_metrics(): void
     {
         $log = ContentLog::factory()->pendingH30()->create([
@@ -134,5 +183,16 @@ class ContentLogCrudTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_show_redirects_to_index_with_search(): void
+    {
+        $log = ContentLog::factory()->create([
+            'title' => 'Konten Peluncuran Produk',
+        ]);
+
+        $response = $this->get(route('content-logs.show', $log));
+
+        $response->assertRedirect(route('content-logs.index', ['search' => 'Konten Peluncuran Produk']));
     }
 }

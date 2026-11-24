@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', isset($header) ? strip_tags($header) . ' — ' : '') Dharma Group IG Dashboard</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/logo-dharma.png') }}">
+
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,10 +25,53 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: #f8f9fa;
         }
+
+        /* Cross-Document View Transitions (Smooth page switching) */
+        @media (prefers-reduced-motion: no-preference) {
+            @view-transition {
+                navigation: auto;
+            }
+            ::view-transition-old(root) {
+                animation: 0.18s ease-out both pageFadeOut;
+            }
+            ::view-transition-new(root) {
+                animation: 0.22s ease-in both pageFadeIn;
+            }
+            @keyframes pageFadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            @keyframes pageFadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        }
+
+        /* Smooth chart container entrance animation */
+        @keyframes chartContainerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .echart-container {
             width: 100%;
             height: 340px;
+            animation: chartContainerFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+            will-change: opacity, transform;
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .echart-container {
+                animation: none;
+            }
+        }
+
         [x-cloak] { display: none !important; }
     </style>
     @stack('styles')
@@ -33,20 +79,19 @@
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
     <div class="flex min-h-screen">
         <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 shrink-0 flex flex-col fixed inset-y-0 left-0 z-40 lg:static transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
+        <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 shrink-0 flex flex-col fixed inset-y-0 left-0 z-40 lg:static transition-[margin,transform] duration-300 ease-in-out -translate-x-full lg:translate-x-0">
             <!-- Brand Logo -->
             <div class="h-18 px-6 flex items-center justify-between border-b border-gray-100">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-purple-700 flex items-center justify-center text-white font-bold shadow-md shadow-purple-200">
-                        DG
-                    </div>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
+                    <img src="{{ asset('assets/logo-dharma.png') }}" alt="Logo Dharma Group" class="w-10 h-10 object-contain shrink-0 group-hover:scale-105 transition-transform duration-200">
                     <div>
                         <div class="font-extrabold text-gray-900 tracking-tight text-sm">DHARMA GROUP</div>
                         <div class="text-[11px] text-gray-500 font-medium">IG Content Analytics</div>
                     </div>
                 </a>
-                <button id="closeSidebarBtn" type="button" class="lg:hidden text-gray-400 hover:text-gray-600 p-1">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button id="closeSidebarBtn" type="button" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer" title="Tutup / Collapse Sidebar">
+                    <svg class="w-5 h-5 hidden lg:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                    <svg class="w-6 h-6 lg:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
 
@@ -85,6 +130,17 @@
                 @endcan
 
                 @can('content_logs.view')
+                <!-- Kalender Konten -->
+                <a href="{{ route('calendar.index') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors {{ request()->routeIs('calendar.*') ? 'bg-purple-50 text-purple-700 font-semibold shadow-xs' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 {{ request()->routeIs('calendar.*') ? 'text-purple-600' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>Kalender Konten</span>
+                    </div>
+                </a>
+
+                <!-- Master Log Konten -->
                 <a href="{{ route('content-logs.index') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors {{ request()->routeIs('content-logs.*') ? 'bg-purple-50 text-purple-700 font-semibold shadow-xs' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <div class="flex items-center gap-3">
                         <svg class="w-5 h-5 {{ request()->routeIs('content-logs.*') ? 'text-purple-600' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +276,7 @@
             <!-- Topbar -->
             <header class="h-18 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-20">
                 <div class="flex items-center gap-3">
-                    <button id="openSidebarBtn" type="button" class="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none">
+                    <button id="openSidebarBtn" type="button" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none cursor-pointer" title="Buka / Tutup Sidebar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <div>
@@ -232,7 +288,7 @@
                 <div class="flex items-center gap-2 sm:gap-3">
                     @yield('topbar_actions')
 
-                    @if(request()->routeIs('content-logs.*'))
+                    @if(request()->routeIs('content-logs.*') || request()->routeIs('calendar.*'))
                         @can('import.create')
                         <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition cursor-pointer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -249,6 +305,16 @@
                     @endif
 
                     @auth
+                    <!-- Bell Notifikasi Reminder Evaluasi H+30 -->
+                    @if(isset($dueReminderContents) && $dueReminderContents->isNotEmpty())
+                    <button type="button" onclick="document.getElementById('reminderH30Modal').classList.remove('hidden')" class="relative p-2 rounded-lg text-amber-600 hover:bg-amber-50 focus:outline-none cursor-pointer transition" title="{{ $dueReminderContents->count() }} Konten Perlu Evaluasi H+30">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-extrabold text-white animate-pulse">
+                            {{ $dueReminderContents->count() }}
+                        </span>
+                    </button>
+                    @endif
+
                     <!-- User Dropdown in Topbar -->
                     <div class="relative ml-1" x-data="{ open: false }">
                         <button @click="open = !open" type="button" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition focus:outline-none cursor-pointer">
@@ -433,12 +499,32 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Tujuan / Pilar Konten *</label>
-                        <select name="pillar" required class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
-                            @foreach(\App\Enums\ContentPillar::cases() as $pillar)
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-gray-700">Tujuan / Pilar Konten *</label>
+                            <button type="button" onclick="toggleAddPillarInput()" class="text-[11px] font-bold text-purple-700 hover:text-purple-900 cursor-pointer">
+                                + Tambah Pilar Baru
+                            </button>
+                        </div>
+                        <select id="modal_pillar_select" name="pillar" required class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                            @foreach($availablePillars ?? \App\Models\Pillar::allPillars() as $pillar)
                                 <option value="{{ $pillar->value }}">{{ $pillar->value }}</option>
                             @endforeach
                         </select>
+
+                        <!-- Box Tambah Pilar Baru Inline -->
+                        <div id="newPillarBox" class="hidden mt-2 p-2 bg-purple-50/90 border border-purple-200 rounded-xl space-y-1.5 w-full box-border shadow-xs">
+                            <span class="text-[10px] font-bold text-purple-900 block">Ketik Nama Pilar Baru:</span>
+                            <div class="flex items-center gap-1.5 w-full">
+                                <input type="text" id="new_pillar_name" onkeydown="if(event.key === 'Enter') { event.preventDefault(); submitNewPillar(); }" placeholder="Nama pilar baru..." class="min-w-0 flex-1 px-2.5 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                                <button type="button" onclick="submitNewPillar()" class="shrink-0 px-2.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-lg cursor-pointer transition shadow-xs">
+                                    Simpan
+                                </button>
+                                <button type="button" onclick="toggleAddPillarInput(false)" class="shrink-0 px-2 py-1.5 text-gray-400 hover:text-gray-700 hover:bg-purple-100 rounded-lg cursor-pointer transition text-xs font-bold leading-none" title="Batal">
+                                    &times;
+                                </button>
+                            </div>
+                            <p id="newPillarFeedback" class="text-[10px] text-gray-500 hidden"></p>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Nama PIC Konten</label>
@@ -458,10 +544,10 @@
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="document.getElementById('createContentModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50">
+                    <button type="button" onclick="document.getElementById('createContentModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 cursor-pointer">
                         Batal
                     </button>
-                    <button type="submit" class="px-5 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-lg shadow-sm">
+                    <button type="submit" class="px-5 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-lg shadow-sm cursor-pointer">
                         Simpan Konten
                     </button>
                 </div>
@@ -469,37 +555,204 @@
         </div>
     </div>
 
-    <!-- Mobile sidebar script -->
+    <!-- Modal Pengingat Otomatis H+30 (Login / Due Date Alert) -->
+    @if(isset($dueReminderContents) && $dueReminderContents->isNotEmpty())
+    <div id="reminderH30Modal" onclick="if(event.target === this) this.classList.add('hidden')" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 {{ session('show_h30_reminder') ? '' : 'hidden' }}">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-amber-200">
+            <div class="flex items-center justify-between pb-3 border-b border-amber-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">
+                        🔔
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-gray-900">Pengingat Evaluasi H+30</h3>
+                        <p class="text-xs text-amber-800 font-medium">Terdapat {{ $dueReminderContents->count() }} konten yang telah mencapai / melewati jatuh tempo evaluasi metrik 30 hari.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('reminderH30Modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl cursor-pointer">&times;</button>
+            </div>
+
+            <div class="py-4 space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                @foreach($dueReminderContents as $dueItem)
+                    @php
+                        $daysOverdue = now()->startOfDay()->diffInDays($dueItem->h30_due_date, false);
+                    @endphp
+                    <div class="p-3 rounded-xl border border-gray-200 hover:border-purple-300 bg-gray-50/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-900">{{ $dueItem->title }}</span>
+                                <span class="text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">{{ is_object($dueItem->pillar) && property_exists($dueItem->pillar, 'value') ? $dueItem->pillar->value : (string) $dueItem->pillar }}</span>
+                            </div>
+                            <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2">
+                                <span>Posting: <strong>{{ $dueItem->post_date?->format('d/m/Y') }}</strong></span>
+                                &bull;
+                                <span>Jatuh Tempo: <strong>{{ $dueItem->h30_due_date?->format('d/m/Y') }}</strong></span>
+                                @if($daysOverdue < 0)
+                                    <span class="text-red-700 font-bold bg-red-50 px-1.5 py-0.5 rounded text-[10px]">⚠️ Terlambat {{ abs((int)$daysOverdue) }} hari</span>
+                                @else
+                                    <span class="text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">⏰ Hari ini</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a href="{{ route('content-logs.index') }}?status=overdue&search={{ urlencode($dueItem->title) }}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white transition">
+                                Input Metrik
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
+                <a href="{{ route('content-logs.index') }}?status=overdue" class="text-xs text-purple-700 hover:text-purple-900 font-bold underline">
+                    Lihat Semua Konten Overdue di Master Log &rarr;
+                </a>
+                <button type="button" onclick="document.getElementById('reminderH30Modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100 cursor-pointer">
+                    Nanti Saja
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Mobile & Desktop Sidebar & Global Modals script -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebarBackdrop');
         const openBtn = document.getElementById('openSidebarBtn');
         const closeBtn = document.getElementById('closeSidebarBtn');
 
-        function openSidebar() {
-            sidebar.classList.remove('-translate-x-full');
-            backdrop.classList.remove('hidden');
+        // Restore desktop collapse preference on load
+        if (window.innerWidth >= 1024 && sidebar) {
+            const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('lg:-ml-64');
+            }
+        }
+
+        function toggleSidebar() {
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.toggle('lg:-ml-64');
+                const collapsed = sidebar.classList.contains('lg:-ml-64');
+                localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
+            } else {
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('hidden');
+            }
         }
 
         function closeSidebar() {
-            sidebar.classList.add('-translate-x-full');
-            backdrop.classList.add('hidden');
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.add('lg:-ml-64');
+                localStorage.setItem('sidebar_collapsed', 'true');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
         }
 
-        if (openBtn) openBtn.addEventListener('click', openSidebar);
+        if (openBtn) openBtn.addEventListener('click', toggleSidebar);
         if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
         if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+        // Helper fungsi Tambah Pilar Baru inline
+        function toggleAddPillarInput(show) {
+            const box = document.getElementById('newPillarBox');
+            if (!box) return;
+            if (show === undefined) {
+                box.classList.toggle('hidden');
+            } else if (show) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+            if (!box.classList.contains('hidden')) {
+                const input = document.getElementById('new_pillar_name');
+                if (input) input.focus();
+            }
+        }
+
+        function submitNewPillar() {
+            const input = document.getElementById('new_pillar_name');
+            const feedback = document.getElementById('newPillarFeedback');
+            if (!input || !input.value.trim()) return;
+
+            const name = input.value.trim();
+            if (feedback) {
+                feedback.textContent = 'Menyimpan pilar baru...';
+                feedback.classList.remove('hidden', 'text-red-600', 'text-green-600');
+                feedback.classList.add('text-gray-500');
+            }
+
+            fetch('{{ route('pillars.store') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ name: name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.pillar) {
+                    const select = document.getElementById('modal_pillar_select');
+                    if (select) {
+                        let existing = Array.from(select.options).find(opt => opt.value.toLowerCase() === data.pillar.name.toLowerCase());
+                        if (!existing) {
+                            const opt = document.createElement('option');
+                            opt.value = data.pillar.name;
+                            opt.textContent = data.pillar.name;
+                            select.appendChild(opt);
+                            select.value = data.pillar.name;
+                        } else {
+                            select.value = existing.value;
+                        }
+                    }
+                    const editSelect = document.getElementById('e_pillar');
+                    if (editSelect) {
+                        let existingEdit = Array.from(editSelect.options).find(opt => opt.value.toLowerCase() === data.pillar.name.toLowerCase());
+                        if (!existingEdit) {
+                            const optEdit = document.createElement('option');
+                            optEdit.value = data.pillar.name;
+                            optEdit.textContent = data.pillar.name;
+                            editSelect.appendChild(optEdit);
+                        }
+                    }
+                    input.value = '';
+                    toggleAddPillarInput(false);
+                    if (feedback) {
+                        feedback.textContent = '';
+                        feedback.classList.add('hidden');
+                    }
+                } else {
+                    if (feedback) {
+                        feedback.textContent = data.message || 'Gagal menyimpan pilar';
+                        feedback.classList.add('text-red-600');
+                    }
+                }
+            })
+            .catch(err => {
+                if (feedback) {
+                    feedback.textContent = 'Terjadi kesalahan sistem saat menyimpan pilar.';
+                    feedback.classList.add('text-red-600');
+                }
+            });
+        }
 
         // Close modals and mobile sidebar on Escape key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
-                ['importModal', 'createContentModal', 'metricsModal', 'editModal', 'drilldownModal'].forEach(id => {
+                ['importModal', 'createContentModal', 'metricsModal', 'editModal', 'drilldownModal', 'reminderH30Modal', 'calendarDetailModal'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el && !el.classList.contains('hidden')) {
                         el.classList.add('hidden');
                     }
                 });
-                closeSidebar();
+                if (window.innerWidth < 1024) {
+                    closeSidebar();
+                }
             }
         });
     </script>

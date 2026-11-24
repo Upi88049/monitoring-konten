@@ -25,13 +25,31 @@
                     </select>
                 </div>
 
+                <!-- Bulan -->
+                <div class="flex items-center gap-1.5">
+                    <label for="filter_month" class="text-xs text-gray-600 font-medium">Bulan:</label>
+                    <select id="filter_month" name="month" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1.5 font-semibold text-gray-800 focus:ring-2 focus:ring-purple-500 cursor-pointer">
+                        <option value="">Semua Bulan (Jan - Des)</option>
+                        @php
+                            $indoMonths = [
+                                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                            ];
+                        @endphp
+                        @foreach($indoMonths as $num => $mName)
+                            <option value="{{ $num }}" {{ (int) $selectedMonth === $num ? 'selected' : '' }}>{{ $num }} - {{ $mName }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Pilar Konten -->
                 <div class="flex items-center gap-1.5">
                     <label for="filter_pillar" class="text-xs text-gray-600 font-medium">Pilar:</label>
                     <select id="filter_pillar" name="pillar" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1.5 font-medium text-gray-800 focus:ring-2 focus:ring-purple-500">
                         <option value="">Semua Pilar</option>
-                        @foreach(\App\Enums\ContentPillar::cases() as $pillarCase)
-                            <option value="{{ $pillarCase->value }}" {{ $selectedPillar === $pillarCase->value ? 'selected' : '' }}>{{ $pillarCase->value }}</option>
+                        @foreach($allPillars as $pillarName)
+                            <option value="{{ $pillarName }}" {{ $selectedPillar === $pillarName ? 'selected' : '' }}>{{ $pillarName }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -49,7 +67,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                @if($selectedPillar || $selectedContentType || $selectedYear != 2026)
+                @if($selectedMonth || $selectedPillar || $selectedContentType || $selectedYear != 2026)
                     <a href="{{ route('dashboard.overview') }}" class="text-xs text-gray-500 hover:text-purple-700 underline font-medium">Reset Filter</a>
                 @endif
                 <button type="submit" class="px-3 py-1.5 text-xs font-semibold bg-purple-700 hover:bg-purple-800 text-white rounded-lg shadow-xs transition">
@@ -152,7 +170,7 @@
             <div>
                 <div class="text-3xl font-extrabold text-gray-900 tracking-tight">+{{ number_format($totalFollows) }}</div>
                 <div class="mt-2 text-xs text-gray-500">
-                    Diperoleh dari performa postingan {{ $selectedYear }}
+                    Diperoleh dari performa postingan {{ $selectedMonth ? ($indoMonths[$selectedMonth] ?? 'Bulan ' . $selectedMonth) . ' ' . $selectedYear : 'Tahun ' . $selectedYear }}
                 </div>
             </div>
         </div>
@@ -166,9 +184,9 @@
             <div class="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                     <h3 class="card-title text-base font-bold text-gray-900">KPI 1 — Engagement & Views H+30</h3>
-                    <p class="card-subtitle text-xs text-gray-500">Total Interaksi (Bar) vs Total Tayangan H+30 (Line) Seluruh Bulan</p>
+                    <p class="card-subtitle text-xs text-gray-500">{{ $chartSubtitleKPI1 }}</p>
                 </div>
-                <span class="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-md">Combo Chart</span>
+                <span class="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-md">{{ $chartMode === 'monthly' ? 'Detail Konten' : 'Combo Chart' }}</span>
             </div>
             <div id="chartComboEngagement" class="echart-container mt-3"></div>
         </div>
@@ -178,7 +196,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                     <h3 class="card-title text-base font-bold text-gray-900">KPI 2 — Tren Engagement Rate (ER %)</h3>
-                    <p class="card-subtitle text-xs text-gray-500">Perbandingan Monthly Aggregate ER vs Rata-rata per Konten vs Benchmark</p>
+                    <p class="card-subtitle text-xs text-gray-500">{{ $chartSubtitleKPI2 }}</p>
                 </div>
                 <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md">Benchmark 1.72%</span>
             </div>
@@ -194,7 +212,7 @@
                 <h3 class="card-title text-base font-bold text-gray-900">Ranking Performa Utama: Views & Engagement Rate</h3>
                 <p class="card-subtitle text-xs text-gray-500">Postingan dengan capaian tertinggi (Top) dan terendah (Low) untuk evaluasi performa</p>
             </div>
-            <span class="text-xs text-purple-700 font-semibold bg-purple-50 px-2.5 py-1 rounded-lg">Tahun {{ $selectedYear }}</span>
+            <span class="text-xs text-purple-700 font-semibold bg-purple-50 px-2.5 py-1 rounded-lg">{{ $selectedMonth ? 'Bulan ' . ($indoMonths[$selectedMonth] ?? $selectedMonth) . ' ' . $selectedYear : 'Tahun ' . $selectedYear }}</span>
         </div>
 
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -282,105 +300,164 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const monthNames = @json($monthNames);
+        requestAnimationFrame(function () {
+            const chartCategories = @json($chartCategories);
+            const chartEngagement = @json($chartEngagement);
+            const chartViews = @json($chartViews);
+            const chartAggregateER = @json($chartAggregateER);
+            const chartAverageER = @json($chartAverageER);
+            const chartBenchmark = @json($chartBenchmark);
 
-        // 1. KPI 1: Combo Chart (Engagement Bar + Views Line)
-        const comboEl = document.getElementById('chartComboEngagement');
-        if (comboEl) {
-            const chartCombo = echarts.init(comboEl);
-            chartCombo.setOption({
-                tooltip: {
-                    trigger: 'axis',
-                    axisPointer: { type: 'cross' },
-                    formatter: function (params) {
-                        let res = '<div class="font-bold text-xs mb-1">' + params[0].name + ' ' + {{ $selectedYear }} + '</div>';
-                        params.forEach(p => {
-                            res += '<div class="flex items-center justify-between gap-3 text-xs">'
-                                + '<span>' + p.marker + p.seriesName + ':</span>'
-                                + '<strong>' + p.value.toLocaleString() + '</strong>'
-                                + '</div>';
-                        });
-                        return res;
-                    }
-                },
-                legend: { data: ['Total Engagement', 'Total Views H+30'], bottom: 0 },
-                grid: { top: '12%', left: '3%', right: '4%', bottom: '15%', containLabel: true },
-                xAxis: [{ type: 'category', data: monthNames, axisTick: { alignWithLabel: true } }],
-                yAxis: [
-                    { type: 'value', name: 'Interaksi', position: 'left', splitLine: { lineStyle: { color: '#f0f0f0' } } },
-                    { type: 'value', name: 'Views', position: 'right', splitLine: { show: false } }
-                ],
-                series: [
-                    {
-                        name: 'Total Engagement',
-                        type: 'bar',
-                        itemStyle: { color: '#775da6', borderRadius: [4, 4, 0, 0] },
-                        data: @json($monthlyEngagement)
+            // 1. KPI 1: Combo Chart (Engagement Bar + Views Line)
+            const comboEl = document.getElementById('chartComboEngagement');
+            if (comboEl) {
+                const chartCombo = echarts.init(comboEl, null, { renderer: 'canvas' });
+                chartCombo.setOption({
+                    animation: true,
+                    animationDuration: 900,
+                    animationEasing: 'cubicOut',
+                    animationDurationUpdate: 500,
+                    animationEasingUpdate: 'cubicInOut',
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'cross' },
+                        formatter: function (params) {
+                            let res = '<div class="font-bold text-xs mb-1">' + params[0].name + '</div>';
+                            params.forEach(p => {
+                                res += '<div class="flex items-center justify-between gap-3 text-xs">'
+                                    + '<span>' + p.marker + p.seriesName + ':</span>'
+                                    + '<strong>' + p.value.toLocaleString() + '</strong>'
+                                    + '</div>';
+                            });
+                            return res;
+                        }
                     },
-                    {
-                        name: 'Total Views H+30',
-                        type: 'line',
-                        yAxisIndex: 1,
-                        smooth: true,
-                        itemStyle: { color: '#f9837c' },
-                        lineStyle: { width: 3 },
-                        data: @json($monthlyViews)
-                    }
-                ]
-            });
-            window.addEventListener('resize', () => chartCombo.resize());
-        }
+                    legend: { data: ['Total Engagement', 'Total Views H+30'], bottom: 0 },
+                    grid: { top: '12%', left: '3%', right: '4%', bottom: chartCategories.length > 7 ? '22%' : '15%', containLabel: true },
+                    xAxis: [{
+                        type: 'category',
+                        data: chartCategories,
+                        axisTick: { alignWithLabel: true },
+                        axisLabel: {
+                            interval: 0,
+                            rotate: chartCategories.length > 6 ? 20 : 0,
+                            fontSize: 11
+                        }
+                    }],
+                    yAxis: [
+                        { type: 'value', name: 'Interaksi', position: 'left', splitLine: { lineStyle: { color: '#f0f0f0' } } },
+                        { type: 'value', name: 'Views', position: 'right', splitLine: { show: false } }
+                    ],
+                    series: [
+                        {
+                            name: 'Total Engagement',
+                            type: 'bar',
+                            itemStyle: { color: '#775da6', borderRadius: [4, 4, 0, 0] },
+                            animationDelay: function (idx) {
+                                return idx * 45;
+                            },
+                            animationDuration: 850,
+                            animationEasing: 'cubicOut',
+                            data: chartEngagement
+                        },
+                        {
+                            name: 'Total Views H+30',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            smooth: true,
+                            itemStyle: { color: '#f9837c' },
+                            lineStyle: { width: 3 },
+                            animationDelay: function (idx) {
+                                return idx * 45 + 120;
+                            },
+                            animationDuration: 1000,
+                            animationEasing: 'quadraticOut',
+                            data: chartViews
+                        }
+                    ]
+                });
+                window.addEventListener('resize', () => chartCombo.resize());
+            }
 
-        // 2. KPI 2: Multi-Line Chart (Aggregate ER vs Average ER vs Benchmark)
-        const lineEl = document.getElementById('chartMultiLineER');
-        if (lineEl) {
-            const chartLine = echarts.init(lineEl);
-            chartLine.setOption({
-                tooltip: {
-                    trigger: 'axis',
-                    formatter: function (params) {
-                        let res = '<div class="font-bold text-xs mb-1">' + params[0].name + ' ' + {{ $selectedYear }} + '</div>';
-                        params.forEach(p => {
-                            res += '<div class="flex items-center justify-between gap-3 text-xs">'
-                                + '<span>' + p.marker + p.seriesName + ':</span>'
-                                + '<strong>' + p.value + '%</strong>'
-                                + '</div>';
-                        });
-                        return res;
-                    }
-                },
-                legend: { data: ['Monthly Aggregate ER', 'Average ER per Konten', 'Benchmark Dharma Group (1.72%)'], bottom: 0 },
-                grid: { top: '12%', left: '3%', right: '4%', bottom: '15%', containLabel: true },
-                xAxis: [{ type: 'category', data: monthNames, axisTick: { alignWithLabel: true } }],
-                yAxis: [{ type: 'value', name: 'ER (%)', splitLine: { lineStyle: { color: '#f0f0f0' } } }],
-                series: [
-                    {
-                        name: 'Monthly Aggregate ER',
-                        type: 'line',
-                        smooth: true,
-                        itemStyle: { color: '#775da6' },
-                        lineStyle: { width: 3 },
-                        data: @json($monthlyAggregateER)
+            // 2. KPI 2: Multi-Line Chart (Aggregate ER vs Average ER vs Benchmark)
+            const lineEl = document.getElementById('chartMultiLineER');
+            if (lineEl) {
+                const chartLine = echarts.init(lineEl, null, { renderer: 'canvas' });
+                chartLine.setOption({
+                    animation: true,
+                    animationDuration: 1000,
+                    animationEasing: 'quadraticOut',
+                    animationDurationUpdate: 500,
+                    animationEasingUpdate: 'cubicInOut',
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function (params) {
+                            let res = '<div class="font-bold text-xs mb-1">' + params[0].name + '</div>';
+                            params.forEach(p => {
+                                res += '<div class="flex items-center justify-between gap-3 text-xs">'
+                                    + '<span>' + p.marker + p.seriesName + ':</span>'
+                                    + '<strong>' + p.value + '%</strong>'
+                                    + '</div>';
+                            });
+                            return res;
+                        }
                     },
-                    {
-                        name: 'Average ER per Konten',
-                        type: 'line',
-                        smooth: true,
-                        itemStyle: { color: '#2dd4bf' },
-                        lineStyle: { width: 2, type: 'dashed' },
-                        data: @json($monthlyAverageER)
-                    },
-                    {
-                        name: 'Benchmark Dharma Group (1.72%)',
-                        type: 'line',
-                        symbol: 'none',
-                        lineStyle: { color: '#f43f5e', width: 2, type: 'dotted' },
-                        data: Array(12).fill({{ $benchmarkER }})
-                    }
-                ]
-            });
-            window.addEventListener('resize', () => chartLine.resize());
-        }
+                    legend: { data: ['Monthly Aggregate ER', 'Average ER per Konten', 'Benchmark Dharma Group (1.72%)'], bottom: 0 },
+                    grid: { top: '12%', left: '3%', right: '4%', bottom: chartCategories.length > 7 ? '22%' : '15%', containLabel: true },
+                    xAxis: [{
+                        type: 'category',
+                        data: chartCategories,
+                        axisTick: { alignWithLabel: true },
+                        axisLabel: {
+                            interval: 0,
+                            rotate: chartCategories.length > 6 ? 20 : 0,
+                            fontSize: 11
+                        }
+                    }],
+                    yAxis: [{ type: 'value', name: 'ER (%)', splitLine: { lineStyle: { color: '#f0f0f0' } } }],
+                    series: [
+                        {
+                            name: 'Monthly Aggregate ER',
+                            type: 'line',
+                            smooth: true,
+                            itemStyle: { color: '#775da6' },
+                            lineStyle: { width: 3 },
+                            animationDelay: function (idx) {
+                                return idx * 40;
+                            },
+                            animationDuration: 900,
+                            animationEasing: 'cubicOut',
+                            data: chartAggregateER
+                        },
+                        {
+                            name: 'Average ER per Konten',
+                            type: 'line',
+                            smooth: true,
+                            itemStyle: { color: '#2dd4bf' },
+                            lineStyle: { width: 2, type: 'dashed' },
+                            animationDelay: function (idx) {
+                                return idx * 40 + 80;
+                            },
+                            animationDuration: 900,
+                            animationEasing: 'cubicOut',
+                            data: chartAverageER
+                        },
+                        {
+                            name: 'Benchmark Dharma Group (1.72%)',
+                            type: 'line',
+                            symbol: 'none',
+                            lineStyle: { color: '#f43f5e', width: 2, type: 'dotted' },
+                            animationDelay: function () {
+                                return 150;
+                            },
+                            animationDuration: 700,
+                            data: chartBenchmark
+                        }
+                    ]
+                });
+                window.addEventListener('resize', () => chartLine.resize());
+            }
+        });
     });
 </script>
 @endpush

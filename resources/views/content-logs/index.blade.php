@@ -217,7 +217,7 @@
     function openMetricsModal(log) {
         const postDateStr = log.post_date ? String(log.post_date).substring(0, 10) : '-';
         document.getElementById('metricsModalSubtitle').textContent = (log.title || '') + ' (Post: ' + postDateStr + ')';
-        document.getElementById('metricsForm').action = '/content-logs/' + log.id + '/metrics';
+        document.getElementById('metricsForm').action = "{{ url('content-logs') }}/" + log.id + '/metrics';
 
         document.getElementById('m_views_h30').value = log.views_h30 || 0;
         document.getElementById('m_viewers_h30').value = log.viewers_h30 || 0;
@@ -232,12 +232,43 @@
     }
 
     function openEditModal(log) {
-        document.getElementById('editForm').action = '/content-logs/' + log.id;
+        document.getElementById('editForm').action = "{{ url('content-logs') }}/" + log.id;
 
         document.getElementById('e_post_date').value = log.post_date ? String(log.post_date).substring(0, 10) : '';
         document.getElementById('e_content_type').value = log.content_type || '';
         document.getElementById('e_title').value = log.title || '';
-        document.getElementById('e_pillar').value = log.pillar || '';
+
+        let pillarVal = '';
+        if (log.pillar) {
+            if (typeof log.pillar === 'object' && log.pillar.value !== undefined) {
+                pillarVal = log.pillar.value;
+            } else {
+                pillarVal = String(log.pillar);
+            }
+        }
+
+        const selectPillar = document.getElementById('e_pillar');
+        if (selectPillar) {
+            if (pillarVal) {
+                let exists = false;
+                for (let i = 0; i < selectPillar.options.length; i++) {
+                    if (selectPillar.options[i].value === pillarVal) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = pillarVal;
+                    newOpt.textContent = pillarVal;
+                    selectPillar.appendChild(newOpt);
+                }
+                selectPillar.value = pillarVal;
+            } else {
+                selectPillar.value = '';
+            }
+        }
+
         document.getElementById('e_pic_name').value = log.pic_name || '';
         document.getElementById('e_evidence_url').value = log.evidence_url || '';
         document.getElementById('e_notes').value = log.notes || '';

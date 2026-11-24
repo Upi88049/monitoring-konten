@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\ContentPillar;
+use App\Casts\ContentPillarCast;
 use App\Enums\ContentType;
 use App\Enums\DataStatus;
 use App\Enums\EvidenceStatus;
@@ -55,7 +55,7 @@ class ContentLog extends Model
             'post_date' => 'date',
             'h30_due_date' => 'date',
             'content_type' => ContentType::class,
-            'pillar' => ContentPillar::class,
+            'pillar' => ContentPillarCast::class,
             'data_status' => DataStatus::class,
             'evidence_status' => EvidenceStatus::class,
             'views_h30' => 'integer',
@@ -76,8 +76,8 @@ class ContentLog extends Model
     protected static function booted(): void
     {
         static::saving(function (self $log) {
-            // Otomatisasi tanggal jatuh tempo H+30 jika belum ditentukan
-            if ($log->post_date && blank($log->h30_due_date)) {
+            // Otomatisasi tanggal jatuh tempo H+30 jika belum ditentukan atau post_date berubah
+            if ($log->post_date && ($log->isDirty('post_date') || blank($log->h30_due_date))) {
                 $log->h30_due_date = $log->post_date->copy()->addDays(30);
             }
 
@@ -172,9 +172,9 @@ class ContentLog extends Model
      *
      * @param  Builder<self>  $query
      */
-    public function scopeByPillar(Builder $query, ContentPillar|string $pillar): void
+    public function scopeByPillar(Builder $query, object|string $pillar): void
     {
-        $value = $pillar instanceof ContentPillar ? $pillar->value : $pillar;
+        $value = is_object($pillar) && property_exists($pillar, 'value') ? $pillar->value : (string) $pillar;
         $query->where('pillar', $value);
     }
 
@@ -187,5 +187,17 @@ class ContentLog extends Model
     {
         $value = $contentType instanceof ContentType ? $contentType->value : $contentType;
         $query->where('content_type', $value);
+    }
+
+    /**
+     * Ambil nama pilar dalam bentuk string.
+     */
+    public function getPillarNameAttribute(): string
+    {
+        if ($this->pillar === null) {
+            return '-';
+        }
+
+        return is_object($this->pillar) ? ($this->pillar->value ?? (string) $this->pillar) : (string) $this->pillar;
     }
 }
